@@ -11,3 +11,14 @@ export function useNewsApi(params) {
     isError: error,
   };
 }
+
+export function useHeadlineApi(params) {
+  const { country } = params;
+  const api = `/api/news/headlines?country=${country}`;
+  const { data, error } = useSWR(country ? api : null, fetcher);
+  return {
+    data,
+    isLoading: !error && !data,
+    isError: error,
+  };
+}

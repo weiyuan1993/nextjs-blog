@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import Container from "@mui/material/Container";
@@ -6,30 +6,72 @@ import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import InputAdornment from "@mui/material/InputAdornment";
 import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
-import Pagination from "@mui/material/Pagination";
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import Box from '@mui/material/Box';
 import Layout, { siteTitle } from "../components/layout";
-import { getHeadlineNews } from "../lib/news";
-import { useNewsApi } from "../hooks/useNewsApi";
+import { useHeadlineApi } from "../hooks/useNewsApi";
 import homeStyles from "./styles.module.scss";
 import Articles from "../components/Articles";
 
-export default function Home({ headlineArticles = [] }) {
+function a11yProps(index) {
+  return {
+    id: `simple-tab-${index}`,
+    'aria-controls': `simple-tabpanel-${index}`,
+  };
+}
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ p: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+}
+
+const TAB_CONFIG_MAP = {
+  tw: {
+    tab: 'tw',
+    index: 0,
+    country: 'tw'
+  },
+  us: {
+    tab: 'us',
+    index: 1,
+    country: 'us'
+  },
+}
+
+
+export default function Home() {
   const [searchText, setSearchText] = useState("");
-  const [curPage, setCurPage] = useState(1);
+  const [tabConfig, setTabConfig] = useState(TAB_CONFIG_MAP.tw);
 
   const router = useRouter();
-  const { query } = router;
-  const { data, isLoading, isError } = useNewsApi({
-    searchText: query.searchText,
-    page: curPage,
-  });
+
+  const { data: headlinesData = {}, isLoading: isHeadlinesLoading, isError: isHeadlinesError } = useHeadlineApi({ country: tabConfig.country })
 
   const onClickSearch = () => {
-    setCurPage(1);
     router.push({
+      pathname: '/news/search',
       query: { searchText },
     });
   };
+  const onChangeTabs = (e, newTab) => {
+    setTabConfig(Object.values(TAB_CONFIG_MAP).find(config => config.index === newTab))
+  }
+
 
   return (
     <Layout home>
@@ -64,36 +106,22 @@ export default function Home({ headlineArticles = [] }) {
             Search
           </Button>
         </div>
-        {query.searchText ? (
-          <>
-            <Articles
-              articles={data?.articles}
-              isError={isError}
-              isLoading={isLoading}
-            />
-            {data?.totalResults > 20 && (
-              <Pagination
-                count={Math.ceil(data?.totalResults / 20)}
-                shape="rounded"
-                sx={{ display: "flex", justifyContent: "center" }}
-                onChange={(e, selectedPage) => setCurPage(selectedPage)}
-                page={curPage}
-              />
-            )}
-          </>
-        ) : (
-          <Articles articles={headlineArticles} isError={isError} />
-        )}
+        <Box sx={{ width: '100%' }}>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <Tabs value={tabConfig.index} onChange={onChangeTabs} aria-label="basic tabs example">
+              <Tab label="🇹🇼 Headlines" {...a11yProps(0)} />
+              <Tab label="🇺🇸 Headlines" {...a11yProps(1)} />
+            </Tabs>
+          </Box>
+          <TabPanel value={tabConfig.index} index={TAB_CONFIG_MAP.tw.index}>
+            <Articles articles={headlinesData.articles} isError={isHeadlinesError} isLoading={isHeadlinesLoading} />
+          </TabPanel>
+          <TabPanel value={tabConfig.index} index={TAB_CONFIG_MAP.us.index}>
+            <Articles articles={headlinesData.articles} isError={isHeadlinesError} isLoading={isHeadlinesLoading} />
+          </TabPanel>
+        </Box>
       </Container>
     </Layout>
   );
 }
-export async function getStaticProps() {
-  // `getStaticProps` is executed on the server side.
-  const { articles } = await getHeadlineNews();
-  return {
-    props: {
-      headlineArticles: articles,
-    },
-  };
-}
+
