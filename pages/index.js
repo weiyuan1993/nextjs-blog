@@ -1,63 +1,99 @@
+import { useState } from "react";
 import Head from "next/head";
-import Link from "next/link";
-import Date from "../components/date";
+import { useRouter } from "next/router";
+import Container from "@mui/material/Container";
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+import InputAdornment from "@mui/material/InputAdornment";
+import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
+import Pagination from "@mui/material/Pagination";
 import Layout, { siteTitle } from "../components/layout";
-import utilStyles from "../styles/utils.module.css";
-import { getSortedPostsData } from "../lib/posts";
+import { getHeadlineNews } from "../lib/news";
+import { useNewsApi } from "../hooks/useNewsApi";
+import homeStyles from "./styles.module.scss";
+import Articles from "../components/Articles";
 
-export default function Home({ allPostsData }) {
+export default function Home({ headlineArticles = [] }) {
+  const [searchText, setSearchText] = useState("");
+  const [curPage, setCurPage] = useState(1);
+
+  const router = useRouter();
+  const { query } = router;
+  const { data, isLoading, isError } = useNewsApi({
+    searchText: query.searchText,
+    page: curPage,
+  });
+
+  const onClickSearch = () => {
+    setCurPage(1);
+    router.push({
+      query: { searchText },
+    });
+  };
+
   return (
     <Layout home>
       <Head>
         <title>{siteTitle}</title>
       </Head>
-      <section className={utilStyles.headingMd}>
-        <p>
-          Hello, this is Vic. I'm a software developer with 4 years of
-          experience.
-        </p>
-        <p>
-          Now I'm working at Innova Solutions, which is a cross-nation company
-          from the U.S.
-        </p>
-        <p>
-          My responsibility is to maintain and develop a health insurance
-          payment portal.
-        </p>
-        <p>
-          That is a React/Node.js project to manage tens of thousands of
-          transaction details and has serveral backend APIs integrated with.
-        </p>
-        <p>
-          (This is a sample website - you’ll be building a site like this on{" "}
-          <a href="https://nextjs.org/learn">our Next.js tutorial</a>.)
-        </p>
-      </section>
-      <section className={`${utilStyles.headingMd} ${utilStyles.padding1px}`}>
-        <h2 className={utilStyles.headingLg}>Blog</h2>
-        <ul className={utilStyles.list}>
-          {allPostsData.map(({ id, date, title }) => (
-            <li className={utilStyles.listItem} key={id}>
-              <Link href={`/posts/${id}`}>
-                <a>{title}</a>
-              </Link>
-              <br />
-              <small className={utilStyles.lightText}>
-                <Date dateString={date} />
-              </small>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <Container maxWidth="lg">
+        <div className={homeStyles.searchField}>
+          <TextField
+            id="outlined-search"
+            label="Search News"
+            size="small"
+            type="search"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && onClickSearch()}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchOutlinedIcon />
+                </InputAdornment>
+              ),
+            }}
+            autoFocus
+            fullWidth
+          />
+          <Button
+            variant="contained"
+            onClick={onClickSearch}
+            disabled={!searchText}
+          >
+            Search
+          </Button>
+        </div>
+        {query.searchText ? (
+          <>
+            <Articles
+              articles={data?.articles}
+              isError={isError}
+              isLoading={isLoading}
+            />
+            {data?.totalResults > 20 && (
+              <Pagination
+                count={Math.ceil(data?.totalResults / 20)}
+                shape="rounded"
+                sx={{ display: "flex", justifyContent: "center" }}
+                onChange={(e, selectedPage) => setCurPage(selectedPage)}
+                page={curPage}
+              />
+            )}
+          </>
+        ) : (
+          <Articles articles={headlineArticles} isError={isError} />
+        )}
+      </Container>
     </Layout>
   );
 }
-
 export async function getStaticProps() {
-  const allPostsData = getSortedPostsData();
+  // `getStaticProps` is executed on the server side.
+  const { articles } = await getHeadlineNews();
   return {
     props: {
-      allPostsData,
+      headlineArticles: articles,
     },
   };
 }
