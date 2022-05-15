@@ -1,17 +1,17 @@
 import Head from "next/head";
 import Image from "next/image";
-import styles from "./layout.module.css";
+import styles from "./layout.module.scss";
 import utilStyles from "../styles/utils.module.css";
 import Link from "next/link";
 
-const name = "Vic Lo";
-export const siteTitle = "Next.js Sample Website";
+const name = "Rapid News";
+export const siteTitle = "Rapid News";
 
 export default function Layout({ children, home }) {
   return (
     <div className={styles.container}>
       <Head>
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/favicon.png" />
         <meta
           name="description"
           content="Learn how to build a personal website using Next.js"
@@ -24,30 +24,33 @@ export default function Layout({ children, home }) {
         />
         <meta name="og:title" content={siteTitle} />
         <meta name="twitter:card" content="summary_large_image" />
+        <meta name="viewport" content="initial-scale=1, width=device-width" />
       </Head>
       <header className={styles.header}>
         {home ? (
-          <>
-            <Image
-              priority
-              src="/images/profile.jpg"
-              className={utilStyles.borderCircle}
-              height={144}
-              width={144}
-              alt={name}
-            />
-            <h1 className={utilStyles.heading2Xl}>{name}</h1>
-          </>
-        ) : (
-          <>
+          <div>
             <Link href="/">
               <a>
                 <Image
                   priority
-                  src="/images/profile.jpg"
-                  className={utilStyles.borderCircle}
-                  height={108}
-                  width={108}
+                  src="/images/news-128.svg"
+                  height={128}
+                  width={128}
+                  alt={name}
+                />
+              </a>
+            </Link>
+            <h1 className={utilStyles.heading2Xl}>{name}</h1>
+          </div>
+        ) : (
+          <div>
+            <Link href="/">
+              <a>
+                <Image
+                  priority
+                  src="/images/news-128.svg"
+                  height={128}
+                  width={128}
                   alt={name}
                 />
               </a>
@@ -57,7 +60,7 @@ export default function Layout({ children, home }) {
                 <a className={utilStyles.colorInherit}>{name}</a>
               </Link>
             </h2>
-          </>
+          </div>
         )}
       </header>
       <main>{children}</main>
