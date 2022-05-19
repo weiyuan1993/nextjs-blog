@@ -1,127 +1,117 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import Container from "@mui/material/Container";
-import TextField from "@mui/material/TextField";
-import Button from "@mui/material/Button";
-import InputAdornment from "@mui/material/InputAdornment";
-import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import Box from '@mui/material/Box';
+import Box from "@mui/material/Box";
+import TabContext from "@mui/lab/TabContext";
+import TabList from "@mui/lab/TabList";
+import Tab from "@mui/material/Tab";
+import Paper from "@mui/material/Paper";
+import InputBase from "@mui/material/InputBase";
+import Divider from "@mui/material/Divider";
+import IconButton from "@mui/material/IconButton";
+import SearchIcon from "@mui/icons-material/Search";
 import Layout, { siteTitle } from "../components/layout";
 import { useHeadlineApi } from "../hooks/useNewsApi";
-import homeStyles from "./styles.module.scss";
-import Articles from "../components/Articles";
+import Articles from "../components/Article/Articles";
+import { COUNTRY, CATEGORY_CONFIG } from "../constants";
 
-function a11yProps(index) {
-  return {
-    id: `simple-tab-${index}`,
-    'aria-controls': `simple-tabpanel-${index}`,
-  };
-}
-function TabPanel(props) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          {children}
-        </Box>
-      )}
-    </div>
-  );
-}
-
-const TAB_CONFIG_MAP = {
-  tw: {
-    tab: 'tw',
-    index: 0,
-    country: 'tw'
-  },
-  us: {
-    tab: 'us',
-    index: 1,
-    country: 'us'
-  },
-}
-
+const DEFAULT_COUNTRY = COUNTRY.tw;
+const DEFAULT_CATEFGORY = "general";
 
 export default function Home() {
   const [searchText, setSearchText] = useState("");
-  const [tabConfig, setTabConfig] = useState(TAB_CONFIG_MAP.tw);
-
+  const [country, setCountry] = useState(DEFAULT_COUNTRY);
   const router = useRouter();
-
-  const { data: headlinesData = {}, isLoading: isHeadlinesLoading, isError: isHeadlinesError } = useHeadlineApi({ country: tabConfig.country })
+  const { query = { category: DEFAULT_CATEFGORY, country: DEFAULT_COUNTRY } } =
+    router;
+  const {
+    data: headlinesData = {},
+    isLoading: isHeadlinesLoading,
+    isError: isHeadlinesError,
+  } = useHeadlineApi(query);
 
   const onClickSearch = () => {
     router.push({
-      pathname: '/news/search',
+      pathname: "/news/search",
       query: { searchText },
     });
   };
-  const onChangeTabs = (e, newTab) => {
-    setTabConfig(Object.values(TAB_CONFIG_MAP).find(config => config.index === newTab))
-  }
 
+  const onSelectCategory = (event, newCategory) => {
+    router.push({
+      query: { ...query, category: newCategory },
+    });
+  };
+
+  const onSelectCountry = () => {
+    const newCountry = country === COUNTRY.tw ? COUNTRY.us : COUNTRY.tw;
+    setCountry(newCountry);
+    router.push({
+      query: { ...query, country: newCountry },
+    });
+  };
 
   return (
     <Layout home>
       <Head>
         <title>{siteTitle}</title>
       </Head>
-      <Container maxWidth="lg">
-        <div className={homeStyles.searchField}>
-          <TextField
-            id="outlined-search"
-            label="Search News"
-            size="small"
-            type="search"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && onClickSearch()}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchOutlinedIcon />
-                </InputAdornment>
-              ),
-            }}
-            autoFocus
-            fullWidth
-          />
-          <Button
-            variant="contained"
-            onClick={onClickSearch}
-            disabled={!searchText}
-          >
-            Search
-          </Button>
-        </div>
-        <Box sx={{ width: '100%' }}>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <Tabs value={tabConfig.index} onChange={onChangeTabs} aria-label="basic tabs example">
-              <Tab label="🇹🇼 Headlines" {...a11yProps(0)} />
-              <Tab label="🇺🇸 Headlines" {...a11yProps(1)} />
-            </Tabs>
+      <Paper
+        component="div"
+        sx={{
+          p: "2px 4px",
+          display: "flex",
+          alignItems: "center",
+          width: "100%",
+        }}
+      >
+        <IconButton
+          sx={{ p: "10px" }}
+          aria-label="menu"
+          onClick={onSelectCountry}
+        >
+          <img priority width="30px" src={`/images/${country}.svg`} />
+        </IconButton>
+        <Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />
+        <InputBase
+          sx={{ ml: 1, flex: 1 }}
+          placeholder="Search Google Maps"
+          inputProps={{ "aria-label": "search google maps" }}
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && onClickSearch()}
+          autoFocus
+        />
+        <IconButton
+          sx={{ p: "10px" }}
+          aria-label="search"
+          onClick={onClickSearch}
+          disabled={!searchText}
+        >
+          <SearchIcon />
+        </IconButton>
+      </Paper>
+      <Box sx={{ width: "100%" }}>
+        <TabContext value={query.category}>
+          <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+            <TabList
+              onChange={onSelectCategory}
+              variant="scrollable"
+              scrollButtons="auto"
+              aria-label="scrollable auto tabs example"
+            >
+              {Object.entries(CATEGORY_CONFIG).map(([cat, setting]) => (
+                <Tab key={cat} label={cat} value={cat} />
+              ))}
+            </TabList>
+            <Articles
+              articles={headlinesData.articles}
+              isError={isHeadlinesError}
+              isLoading={isHeadlinesLoading}
+            />
           </Box>
-          <TabPanel value={tabConfig.index} index={TAB_CONFIG_MAP.tw.index}>
-            <Articles articles={headlinesData.articles} isError={isHeadlinesError} isLoading={isHeadlinesLoading} />
-          </TabPanel>
-          <TabPanel value={tabConfig.index} index={TAB_CONFIG_MAP.us.index}>
-            <Articles articles={headlinesData.articles} isError={isHeadlinesError} isLoading={isHeadlinesLoading} />
-          </TabPanel>
-        </Box>
-      </Container>
+        </TabContext>
+      </Box>
     </Layout>
   );
 }
-

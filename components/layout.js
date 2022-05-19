@@ -1,5 +1,6 @@
 import Head from "next/head";
 import Image from "next/image";
+import Container from "@mui/material/Container";
 import styles from "./layout.module.scss";
 import utilStyles from "../styles/utils.module.css";
 import Link from "next/link";
@@ -9,7 +10,7 @@ export const siteTitle = "Rapid News";
 
 export default function Layout({ children, home }) {
   return (
-    <div className={styles.container}>
+    <Container maxWidth="lg">
       <Head>
         <link rel="icon" href="/favicon.png" />
         <meta
@@ -34,8 +35,8 @@ export default function Layout({ children, home }) {
                 <Image
                   priority
                   src="/images/news-128.svg"
-                  height={128}
-                  width={128}
+                  height={60}
+                  width={60}
                   alt={name}
                 />
               </a>
@@ -49,8 +50,8 @@ export default function Layout({ children, home }) {
                 <Image
                   priority
                   src="/images/news-128.svg"
-                  height={128}
-                  width={128}
+                  height={60}
+                  width={60}
                   alt={name}
                 />
               </a>
@@ -71,6 +72,6 @@ export default function Layout({ children, home }) {
           </Link>
         </div>
       )}
-    </div>
+    </Container>
   );
 }
