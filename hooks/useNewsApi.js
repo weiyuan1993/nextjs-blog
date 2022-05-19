@@ -13,8 +13,8 @@ export function useNewsApi(params) {
 }
 
 export function useHeadlineApi(params) {
-  const { country } = params;
-  const api = `/api/news/headlines?country=${country}`;
+  const { category = "general", country = "tw" } = params;
+  const api = `/api/news/headlines?category=${category}&country=${country}`;
   const { data, error } = useSWR(country ? api : null, fetcher);
   return {
     data,

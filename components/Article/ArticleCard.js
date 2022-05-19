@@ -5,7 +5,7 @@ import CardMedia from "@mui/material/CardMedia";
 import CardContent from "@mui/material/CardContent";
 import CardActionArea from "@mui/material/CardActionArea";
 import Typography from "@mui/material/Typography";
-import Date from "./date";
+import Date from "../date";
 
 export default function ArticleCard({
   author,
@@ -14,19 +14,21 @@ export default function ArticleCard({
   description,
   url,
   urlToImage,
+  source,
 }) {
   return (
-    <Card sx={{ maxWidth: "100%" }}>
+    <Card sx={{ width: "100%" }}>
       <CardHeader
         title={
           <CardActionArea href={url} target="_blank">
-            {title}
+            <Typography variant="h6">{title}</Typography>
           </CardActionArea>
         }
         subheader={
-          <>
-            {author} - <Date dateString={publishedAt} />
-          </>
+          <Typography variant="caption" color="text.secondary">
+            {author && `${author} - `}
+            {source.name} - <Date dateString={publishedAt} />
+          </Typography>
         }
       />
       <CardActionArea
@@ -42,9 +44,15 @@ export default function ArticleCard({
         {urlToImage && (
           <CardMedia
             component="img"
-            height="150"
+            width="250"
             image={urlToImage}
             alt={title}
+            sx={{
+              "@media screen and (min-width: 990px)": {
+                width: "30%",
+              },
+              justifyContent: "flex-start",
+            }}
           />
         )}
         <CardContent>
